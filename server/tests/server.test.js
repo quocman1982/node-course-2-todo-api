@@ -125,3 +125,68 @@ describe ('DELETE /todos/:id route',() => {
     })
 
 })
+
+describe ('PATCH /todos/:id route',() => {
+    var correctId = todos[0]._id;
+    var invalidId = todos[0]._id + 1;
+    const testObject = {
+        "text":"Test PATCH /todos route",
+        "completed":true
+    };
+    const testObject2 = {
+        "text":"Test PATCH /todos route",
+        "completed":false
+    };
+    it('should update one todo by id',(done) => {
+        request(app)
+            .patch('/todos/' + correctId)
+            .send(testObject)
+            .expect(200)
+            .expect((res) => {
+                expect(res.body.todo.text).toBe(testObject.text);
+                expect(res.body.todo.completed).toBe(testObject.completed);
+                expect(res.body.todo.completedAt).toBeA('number');
+            })
+            .end((err,res) => {
+                if(err){
+                    return done(err);
+                }
+                Todo.findById(correctId).then((todo) =>{
+                    expect(res.body.todo.text).toBe(testObject.text);
+                    expect(res.body.todo.completed).toBe(testObject.completed);
+                    expect(res.body.todo.completedAt).toBeA('number');
+                    done();
+                }).catch((e) => done(e));
+            });
+    })
+
+    it('should update one todo by id and clear completedAt when todo is not completed',(done) => {
+        request(app)
+            .patch('/todos/' + correctId)
+            .send(testObject2)
+            .expect(200)
+            .expect((res) => {
+                expect(res.body.todo.text).toBe(testObject2.text);
+                expect(res.body.todo.completed).toBe(testObject2.completed);
+                expect(res.body.todo.completedAt).toBe(null);
+            })
+            .end((err,res) => {
+                if(err){
+                    return done(err);
+                }
+                Todo.findById(correctId).then((todo) =>{
+                    expect(res.body.todo.text).toBe(testObject2.text);
+                    expect(res.body.todo.completed).toBe(testObject2.completed);
+                    expect(res.body.todo.completedAt).toBe(null);
+                    done();
+                }).catch((e) => done(e));
+            });
+    })
+    it('should return 404 if todo not found',(done) => {
+        request(app)
+            .patch('/todos/' + new ObjectID())
+            .expect(404)
+            .end(done);
+    })
+
+})
