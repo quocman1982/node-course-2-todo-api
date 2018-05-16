@@ -1,3 +1,4 @@
+const _ = require('lodash');
 const expect = require('expect');
 const request = require('supertest');
 const {ObjectID} = require('mongodb');
@@ -77,7 +78,7 @@ describe ('GET /todos route',() => {
 describe ('GET /todos/:id route',() => {
     var correctId = todos[0]._id;
     var invalidId = todos[0]._id + 1;
-    var validButNotExistId = '6afad1ebb915d82816e76c91';
+    
     it('should get one todo by id',(done) => {
         request(app)
             .get('/todos/' + correctId)
@@ -90,6 +91,35 @@ describe ('GET /todos/:id route',() => {
     it('should return 404 if todo not found',(done) => {
         request(app)
             .get('/todos/' + new ObjectID())
+            .expect(404)
+            .end(done);
+    })
+
+})
+
+describe ('DELETE /todos/:id route',() => {
+    var correctId = todos[0]._id;
+    var invalidId = todos[0]._id + 1;
+    it('should delete one todo by id',(done) => {
+        request(app)
+            .delete('/todos/' + correctId)
+            .expect(200)
+            .expect((res) => {
+                expect(res.body.todo.text).toBe(todos[0].text);
+            })
+            .end((err,res) => {
+                if(err){
+                    return done(err);
+                }
+                Todo.findById(correctId).then((todo) =>{
+                    expect(todo).toBe(null);
+                    done();
+                }).catch((e) => done(e));
+            });
+    })
+    it('should return 404 if todo not found',(done) => {
+        request(app)
+            .delete('/todos/' + new ObjectID())
             .expect(404)
             .end(done);
     })
